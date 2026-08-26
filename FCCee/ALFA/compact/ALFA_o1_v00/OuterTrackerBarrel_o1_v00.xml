@@ -124,7 +124,7 @@
         <constant name="OTBar_Support_Foam_thickness" value="50.0*mm"/> <comment> Height of foam </comment>
         <constant name="OTBar_Support_Plate_thickness" value="OTBar_Support_Foam_thickness - 2.0 * 0.5*mm"/> <comment> Leave clearance of 0.5 mm from top and bottom of support foam </comment>
         <constant name="OTBar_Support_Foam_offset" value="(OTBar_Cooling_Plate_width / 2.0) - 14.5*mm - OTBar_Support_Plate_width - (OTBar_Support_Foam_width / 2.0)"/> <comment> Assume 14.5 mm clearance from coldplate edge </comment>
-        <constant name="OTBar_Support_Foam_filled_half_length" value="58.9*mm - 16.0*mm"/> <comment> Assume filled volume of support foam is 58.9 mm - 16 mm clearance </comment>
+        <constant name="OTBar_Support_Foam_filled_half_length" value="58.9*mm - 15.0*mm"/> <comment> Assume filled volume of support foam is 58.9 mm - 15 mm clearance </comment>
 
         <constant name="OTBar_Stave_thickness" value="OTBar_Cooling_Plate_thickness + OTBar_Sensitive_thickness + OTBar_sens_Copper_thickness + OTBar_HDI_thickness + OTBar_Flex_thickness"/>
         <constant name="OTBar_Stave_width" value="2.0 * OTBar_mod_rphi"/> <comment> Doubling here since two modules in nx </comment>
@@ -137,9 +137,9 @@
     <define>
 
         <comment> Layer MID 1 parameters </comment>
-        <constant name="OTBar_nStaves1" value="48."/> <comment> This should be the quantity from which the rest are derived? </comment>
+        <constant name="OTBar_nStaves1" value="52."/> <comment> This should be the quantity from which the rest are derived? </comment>
         <!-- <constant name="OTBar_r1" value="OTBar_inner_radius + 15*mm"/> -->
-        <constant name="OTBar_r1" value="709.6*mm"/>
+        <constant name="OTBar_r1" value="766.7*mm"/>
         <constant name="OTBar_dr" value="5.0*mm"/> <comment> Radial offset of every second stave </comment>
         <!-- <constant name="OTBar_nModules1" value="ceil(2 * OTBar_half_length / (OTBar_mod_z - OTBar_mod_overlap))"/> <comment> Shouldn't this be the floor value? Shouldn't place more modules than we have space for </comment> -->
         <constant name="OTBar_nModules1" value="21"/> <comment> Input quantity : others are derived </comment>
@@ -147,26 +147,20 @@
         <constant name="OTBar_phiOffset1" value="0."/>
 
         <comment> Layer MID 2 parameters </comment>
-        <constant name="OTBar_nStaves2" value="56."/> <comment> This should be the quantity from which the rest are derived? </comment>
-        <constant name="OTBar_r2" value="836.9*mm"/>
+        <constant name="OTBar_nStaves2" value="60."/> <comment> This should be the quantity from which the rest are derived? </comment>
+        <constant name="OTBar_r2" value="893.0*mm"/>
         <constant name="OTBar_nModules2" value="OTBar_nModules1"/> 
         <constant name="OTBar_phiOffset2" value="0."/>
 
-        <comment> Layer MID 3 parameters </comment>
-        <constant name="OTBar_nStaves3" value="64."/> <comment> This should be the quantity from which the rest are derived? </comment>
-        <constant name="OTBar_r3" value="964.3*mm"/>
-        <constant name="OTBar_nModules3" value="OTBar_nModules1"/> 
-        <constant name="OTBar_phiOffset3" value="0."/>
-
         <comment> Layer OUT 1 parameters </comment>
         <constant name="OTBar_nStaves4" value="104."/> <comment> This should be the quantity from which the rest are derived? </comment>
-        <constant name="OTBar_r4" value="1600.6*mm"/>
+        <constant name="OTBar_r4" value="1587.3*mm"/>
         <constant name="OTBar_nModules4" value="OTBar_nModules1"/> 
         <constant name="OTBar_phiOffset4" value="0."/>
 
         <comment> Layer OUT 2 parameters </comment>
         <constant name="OTBar_nStaves5" value="112."/> <comment> This should be the quantity from which the rest are derived? </comment>
-        <constant name="OTBar_r5" value="1727.8*mm"/>
+        <constant name="OTBar_r5" value="1713.5*mm"/>
         <constant name="OTBar_nModules5" value="OTBar_nModules1"/> 
         <constant name="OTBar_phiOffset5" value="0."/>
 
@@ -377,15 +371,6 @@
                    name="OTBarStave_single" 
                    step="OTBar_mod_z_spacing" 
                    phi0="OTBar_phiOffset2"/>
-            <comment> Layer MID 3 </comment>
-            <layer nLadders="OTBar_nStaves3" 
-                   r="OTBar_r3" 
-                   dr="OTBar_dr" 
-                   id="2" 
-                   nmodules="OTBar_nModules3" 
-                   name="OTBarStave_single" 
-                   step="OTBar_mod_z_spacing" 
-                   phi0="OTBar_phiOffset3"/>
             <comment> Layer OUT 1 </comment>
             <layer nLadders="OTBar_nStaves4" 
                    r="OTBar_r4" 

@@ -89,13 +89,13 @@
   <comment> Chemical formula from repeating unit of Polyurethane </comment>
 
   <material name="FR3703_truss"> 
-    <D type="density" unit="g/cm3" value="0.048 * 0.3521"/> 
+    <D type="density" unit="g/cm3" value="0.048 * 0.328"/> 
     <composite n="17" ref="C"/>
     <composite n="16" ref="H"/>
     <composite n="2"  ref="N"/>
     <composite n="4"  ref="O"/>
   </material>
-  <comment> As above but the density is reduced by a fill factor 0.3521 to account for Warren truss at side </comment>
+  <comment> As above but the density is reduced by a fill factor 0.328 to account for Warren truss at side </comment>
 
   <material name="Epoxy">
     <D type="density" unit="g/cm3" value="1.16"/>
