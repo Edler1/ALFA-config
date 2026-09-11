@@ -3,12 +3,12 @@
 #include <TGeoTube.h>
 #include <TGeoShapeAssembly.h>
 
-// PseudoShape constructor
-PseudoShape::PseudoShape(TGeoShape* shape) {
-    // : fType(typeid(*shape).name()) {
-    // : fType(TGeoShape->IsA()->GetName()) {
+#include <algorithm>
 
-    if (!shape) {throw std::invalid_argument("<<Shape is NULL>>");}
+// PseudoShape constructor
+PseudoShape::PseudoShape(const TGeoShape* shape) {
+
+    if (!shape) throw std::invalid_argument("<<Shape is NULL>>");
     fType = typeid(*shape).name();
 
     if (typeid(*shape) == typeid(TGeoTubeSeg)) {
@@ -33,86 +33,110 @@ PseudoShape::PseudoShape(TGeoShape* shape) {
 
     }
 }
-    
 
+bool PseudoShape::operator==(const PseudoShape& rhs) const {
+
+    // Check for equality in basic fields
+    if (fType != rhs.fType) return false;
+
+    if (fParams.size() != rhs.fParams.size()) return false;
+    for (std::size_t i{0}; i < fParams.size(); ++i) {
+        if (std::abs(fParams[i] - rhs.fParams[i]) > GEOMETRY_TOLERANCE) return false;
+    }
+
+    return true;
+}
+
+PseudoMatrix::PseudoMatrix(const TGeoMatrix* matrix) 
+    : fTranslation(matrix->GetTranslation(), matrix->GetTranslation()+3), 
+    fRotation(matrix->GetRotationMatrix(), matrix->GetRotationMatrix()+9), 
+    fScale(matrix->GetScale(), matrix->GetScale()+3) {}
+
+bool PseudoMatrix::operator==(const PseudoMatrix& rhs) const {
+
+    // Check for equality in translation
+    for (std::size_t i{0}; i < fTranslation.size(); ++i) {
+        if (std::abs(fTranslation[i] - rhs.fTranslation[i]) > PLACEMENT_TOLERANCE) return false;
+    }
+    
+    // Check for equality in rotation
+    for (std::size_t i{0}; i < fRotation.size(); ++i) {
+        if (std::abs(fRotation[i] - rhs.fRotation[i]) > PLACEMENT_TOLERANCE) return false;
+    }
+    
+    // Check for equality in scaling
+    for (std::size_t i{0}; i < fScale.size(); ++i) {
+        if (std::abs(fScale[i] - rhs.fScale[i]) > PLACEMENT_TOLERANCE) return false;
+    }
+
+    return true;
+}
 
 // PseudoVolume constructor
-// PseudoVolume::PseudoVolume(const char* name, std::vector<PseudoNode*> nodes, const PseudoVolume* mother, const TGeoShape* shape, const TGeoMedium* medium)
-//     : fName{name}, fNodes{nodes}, fMother{mother} {
-PseudoVolume::PseudoVolume(const char* name, std::vector<PseudoNode*> nodes, TGeoShape* shape, TGeoMedium* medium)
-    : fName{name}, fNodes{nodes}, fShape{shape} {
+PseudoVolume::PseudoVolume(const TGeoVolume* volume)
+    : fName{volume->GetName()}, fNodes{}, fShape{PseudoShape(volume->GetShape())}, fMaterial{volume->GetMaterial()->GetName()} {}
 
-        // if (!shape) {throw std::invalid_argument("<<Shape is NULL>>");}
-        // fShape = PseudoShape(shape);
+bool PseudoVolume::operator==(const PseudoVolume& rhs) const {
 
-        if (!medium) {throw std::invalid_argument("<<Medium is NULL>>");}
-        fMedium = medium->GetName();
+    // Check for equality in basic fields
+    if (fName != rhs.fName) return false;
+    if (fMaterial != rhs.fMaterial) return false;
+    
+    // Check for equality in PseudoShape
+    if (!(fShape == rhs.fShape)) return false;
 
+    return true;
 }
+    
+// PseudoNode constructor
+PseudoNode::PseudoNode(const TGeoNode* node)
+    : fName{node->GetName()}, fVolume{nullptr}, fMother{nullptr},  fMatrix{node->GetMatrix()} {}
 
-// PseudoNode contructor
-PseudoNode::PseudoNode(const char* name, PseudoVolume* volume, PseudoVolume* mother)
-    : fName{name}, fVolume{volume}, fMother{mother} {}
+bool PseudoNode::operator==(const PseudoNode& rhs) const {
 
+    // Check for equality in basic fields
+    if (fName != rhs.fName) return false;
+    
+    // Check for equality in PseudoVolume
+    if (!(*fVolume == *rhs.fVolume)) return false;
 
-
-// PseudoManager contructor
-PseudoManager::PseudoManager(TGeoVolume* topLevelVolume) {
-
-        if (!topLevelVolume) {throw std::invalid_argument("<<Top level volume is NULL>>");}
-        auto* name = topLevelVolume->GetName();
-        // auto nodes = std::vector<std::unique_ptr<PseudoNode>>{};
-        auto nodes = std::vector<PseudoNode*>{};
-
-        // auto* geoNodes = topLevelVolume->GetNodes();
-        // for(auto* geoObject : *geoNodes){
-        //     auto* geoNode = static_cast<TGeoNode*>(geoObject);
-        //     PseudoNode
-        // }
-        //     topLevelVolume->GetNodes(); // Wrong type!! Need to read out nodes!! 
-        
-
-        auto* shape = topLevelVolume->GetShape(); 
-        auto* medium = topLevelVolume->GetMedium(); 
-        fTopLevelVolume = PseudoVolume(name, nodes, shape, medium);
-        fName = name;
-        // fNodes = std::vector<PseudoNodes>{};
-        // fVolumes = std::vector<PseudoVolumes>{};
-
+    // Check for equality in PseudoMatrix
+    if (!(fMatrix == rhs.fMatrix)) return false;
+    
+    return true;
 }
-
+    
 // Note that node => the TGeoNode this PseudoNode replicates, mother => volume within which the node exists, volume => volume to which the transformation matrix pertains
-void PseudoManager::SpawnNode(TGeoNode* node, PseudoVolume* mother, PseudoVolume* volume) {
+PseudoNode* PseudoManager::SpawnNode(const TGeoNode* node, PseudoVolume* mother) {
 
     // Create PseudoNode 
-    fNodes.emplace_back(std::make_unique<PseudoNode>(
-                node->GetName(),
-                volume,
-                mother
-                ));
-    
-    // Add it to mother's node vector
-    mother->fNodes.push_back(fNodes.back().get());
+    fNodes.emplace_back(std::make_unique<PseudoNode>(node));
+    auto* pseudoNode = fNodes.back().get();
 
+    // Create PseudoVolume 
+    fVolumes.emplace_back(std::make_unique<PseudoVolume>(node->GetVolume()));
+    auto* pseudoVolume = fVolumes.back().get();
+    
+    // Link PseudoVolume to its node
+    pseudoNode->fVolume = pseudoVolume;
+
+    // Add it to mother's node vector, mother is NULL for TopNode
+    if (mother) {
+        pseudoNode->fMother = mother;
+        mother->fNodes.push_back(pseudoNode);
+    } else {
+        fTopLevelNode = pseudoNode;
+        fTopLevelVolume = pseudoVolume;
+    }
+    return pseudoNode;
 }
 
-
-// Note that volume => the TGeoVolume this PseudoVolume replicates, node => node that points to this volume
-// No attempt is made to "reuse" volumes, each node gets a "fresh" copy of the volume (to be revised if mem bloats)
-void PseudoManager::SpawnVolume(TGeoVolume* volume, PseudoNode* node) {
-
-    // Create PseudoVolume
-    fVolumes.emplace_back(std::make_unique<PseudoVolume>(
-                volume->GetName(),
-                std::vector<PseudoNode*>{},
-                volume->GetShape(),
-                volume->GetMedium()
-                ));
-
-    // Link it to its owning node
-    node->fVolume = fVolumes.back().get();
-    
-    
+void PseudoManager::SyncNodesRemaining() {
+    for (auto& volume : fVolumes) {
+        volume->fNodesRemaining = volume->fNodes;
+        // Reversing order for findNodePartner iteration in geo_compare.cpp
+        std::reverse(volume->fNodesRemaining.begin(), volume->fNodesRemaining.end());
+    }
 }
 
 

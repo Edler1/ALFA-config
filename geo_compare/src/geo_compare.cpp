@@ -1,82 +1,50 @@
 #include <iostream>
 #include <memory>
+#include <filesystem>
 #include <TFile.h>
 #include <TGeoManager.h>
 
 #include "GeoUtils.h"
 
 
+bool compareNodes(const TGeoNode* node, const PseudoNode* pseudoNode) {
 
+    // Define PseudoNode from given TGeoNode
+    PseudoNode rootNode{node};
+    PseudoVolume rootVolume{node->GetVolume()};
+    rootNode.fVolume = &rootVolume;
 
+    // Use == operators to determine their equality
+    return *pseudoNode==rootNode;
 
-// Initial debugging traversal function
-void copyGeometry(TGeoNode* node){
-    
-    std::cout << " :::::::::::::: starting node traversal ::::::::::::::" << std::endl; 
+}
 
+// Traversal function that builds a pseudoGeometry out of the TGeo Geometry
+void copyGeometry(const TGeoNode* node, PseudoVolume* motherPseudoVolume, PseudoManager* geometryManager) {
 
-    // Here we can define the nodes and extract relevant properties
-    
-    // Here we could already link the node to its parent (which must already be defined, since we start recursion on the top level this is a given)
-    // We must all fill the fMother, so we can find the "top level volume"
-    // Top level volume is created by the constructor of the geometry manager, and nodes are made to point to it if their mother is the world volume (in TGeo)
-    // this check should be made when fMother is filled? or is it in the "normal" logic branch
+    // Define the pseudoNode and its pseudoVolume 
+    auto* pseudoNode = geometryManager->SpawnNode(node, motherPseudoVolume);
+    auto* pseudoVolume = pseudoNode->fVolume;
 
-
-    if (!node) return;
     // Deepest node reached, no children
-    if (!node->GetNodes() || node->GetNodes()->GetEntriesFast() == 0) return;
+    if (!node->GetNodes()) return;
     
-
-    for (auto* child : *(node->GetNodes())){
-
-        auto* childNode = static_cast<TGeoNode*>(child);
-        std::cout << "childNode -> " << childNode->GetName() << std::endl;
-        
-        // Define node we wish to descend into further
-        copyGeometry(childNode);
-
+    // Loop over chlidren nodes for each node
+    for (auto* child : *(node->GetNodes())) {
+        copyGeometry(static_cast<const TGeoNode*>(child), pseudoVolume, geometryManager);
     }
 
-
-
 }
 
-std::vector<TGeoNode*> constructChildrenVector(TObjArray* children){
-    
-    // Start by defining vector
-    std::vector<TGeoNode*> childrenVector;
+PseudoNode* findNodePartner(const TGeoNode* node, std::vector<PseudoNode*>& pseudoNeighbours) {
 
-    // No need to check for children (nullptr), since check already done before calling constructChildrenVector in traverseNode
+    PseudoNode* neighbour{nullptr};
 
-    // Find number of children
-    const std::size_t nChildren = children->GetEntriesFast();
-    childrenVector.reserve(nChildren);
-
-
-    // Reverse children to prevent shifting vector if first element is popped (i.e. if nodes in reference and test files have same ordering)
-    for (std::size_t i{nChildren}; i; --i){
-        childrenVector.push_back(static_cast<TGeoNode*>(children->UncheckedAt(i-1)));
-    }
-
-    return childrenVector;
-
-}
-
-bool compareNodes(TGeoNode* node_a, TGeoNode* node_b){
-    return true;
-}
-
-TGeoNode* findNodePartner(TGeoNode* node_a, std::vector<TGeoNode*>& neighbours_b){
-
-    TGeoNode* neighbour{nullptr};
-
-    // Here we must iterate over the nodes in neighbours_b and return the matching node (and delete it from the vector)
-    for (auto it = neighbours_b.begin(); it != neighbours_b.end(); ++it){
-        if (compareNodes(node_a, *it)){
+    // Search from the end so that erasing a match is O(1)
+    for (auto it = pseudoNeighbours.rbegin(); it != pseudoNeighbours.rend(); ++it) {
+        if (compareNodes(node, *it)) {
             neighbour = *it;
-            neighbours_b.erase(it);
-            std::cout << "--Matching node [" << node_a->GetName() << "] = [" << node_a->GetName() << "]--" << std::endl;
+            pseudoNeighbours.erase((it+1).base());    // base() returns the iterator to 1 after the logical element reverse_iterator (it) is looking at (rbegin ~ end-1)
             break;
         }
     }
@@ -85,215 +53,82 @@ TGeoNode* findNodePartner(TGeoNode* node_a, std::vector<TGeoNode*>& neighbours_b
 
 }
 
-// Actual traversal function
-void traverseNode(TGeoNode* node_a, std::vector<TGeoNode*>& neighbours_b){
-    
+// Traversal function that builds compares the TGeo Geometry to pseudoGeometry 
+void auditGeometry(const TGeoNode* node, PseudoVolume* motherPseudoVolume, PseudoManager* geometryManager) {
 
-    // std::cout << " :::::::::::::: starting traversal ::::::::::::::" << std::endl; 
-    
-    // Check should be per-node, and could thus live here?
-    // Careful with above though, since it stops on nodes with no children! Those need to be checked too!
-    // Moved it below check, does that work?
+    // Compare equality of Top Node and Top PseudoNode 
+    if (!motherPseudoVolume && !compareNodes(node, geometryManager->fTopLevelNode)) throw std::runtime_error("<<Top level nodes are not equivalent>>");
 
-    auto* node_b = findNodePartner(node_a, neighbours_b);
-    if (!node_b){
-        std::cout << "No partner found in test geometry!" << std::endl;
-        // Should halt execution here...
-    }
+    // Find pseudoNode that matches the TGeoNode among the neighbouring PseudoNodes (unless at top node, i.e. no motherPseudoVolume)
+    auto* pseudoNode = motherPseudoVolume ? findNodePartner(node, motherPseudoVolume->fNodesRemaining) : geometryManager->fTopLevelNode;
+    auto* pseudoVolume = pseudoNode->fVolume;
 
-    if (!node_a) return;
     // Deepest node reached, no children
-    // if (!node_a->GetNodes() || node_a->GetNodes()->GetEntriesFast() == 0) return;
-    if (!node_a->GetNodes()) return;
-    
-    // auto* nodeVolume = node->GetVolume();
+    if (!node->GetNodes()) return;
 
-    // for (auto* child : *(node->GetNodes())){
-
-    // auto* nodes = node_a->GetNodes();
-    // const int count = nodes->GetEntriesFast(); // Or GetEntries()
-
-    // Constructing vector to hold the children of b
-    auto childrenVector_b = constructChildrenVector(node_b->GetNodes());
-    for (auto* child : *(node_a->GetNodes())){
-
-        auto* childNode = static_cast<TGeoNode*>(child);
-        std::cout << "childNode -> " << childNode->GetName() << std::endl;
-
-        // auto* child_b = findNodePartner(child, childrenVector_b); 
-        // auto grandChildrenVector_b = constructChildrenVector(child_b->GetNodes());
-        
-        // Define node we wish to descend into further
-        traverseNode(childNode, childrenVector_b);
-
+    for (auto* child : *(node->GetNodes())) {
+        auditGeometry(static_cast<const TGeoNode*>(child), pseudoVolume, geometryManager);
     }
-
 
 }
 
-// void compareNodeEquivalence(TGeoNode* a_child, TGeoNode* b_children){
-//
-//     if (!node) return;
-//     // Deepest node reached, no children
-//     if (!node->GetNodes() || node->GetNodes()->GetEntriesFast() == 0) return;
-//
-//     std::cout << " :::::::::::::: starting traversal ::::::::::::::" << std::endl; 
-//
-//     // auto* nodeVolume = node->GetVolume();
-//
-    // auto* nodes = node_a->GetNodes();
-    // const int count = nodes->GetEntriesFast(); // Or GetEntries()
-                                               //
-//     // Fill b's node vector in reverse, so matching entries can be popped
-//     for (size_t i = count - 1; i; --i) {
-//         auto* child = static_cast<TGeoNode*>(nodes->UncheckedAt(i));
-//
-//         auto* childNode = static_cast<TGeoNode*>(child);
-//         std::cout << "childNode -> " << childNode->GetName() << std::endl;
-//
-//         // Define node we wish to descend into further
-//         traverseNode(childNode);
-//
-//     }
-//
-//
-// }
-
-
-int main(int argc, char** argv){
-
-
-    // ToDo:
-    // 0. Should check execution actually does what we want
-    //  a. Does the reversing of vector work, and does it match the first node consistently?
-    // 1. Guard against passing wrong arguments?
-    // 2. Should be some way to pass flags? Do we care?
-    // 3. Guard loading of objects against nulls
-    // 4. Can aggressively enforce consts
-
-    // Hardcoded filepath + names
-    // constexpr auto fpath = "~/Software/official/k4geo/";
-    std::string fpath = "~/Software/official/k4geo/";
-    std::string f1 = fpath + "ALFA_debug.root";
-    std::string f2 = fpath + "ALFA_debug_copy.root";
-
-    // Start by reading .root geometry file
-    // auto fileName = argv[1];
-    // std::unique_ptr<TFile> geoFile(TFile::Open(argv[1]));
-    
-    std::unique_ptr<TFile> geoFile_1(TFile::Open(f1.c_str()));
-    // std::unique_ptr<TFile> geoFile_2(TFile::Open(f2.c_str()));
-    
-    // Attach TGeoManager
-    auto* geoManager_1 = static_cast<TGeoManager*>(geoFile_1->Get("default"));
-    
-    std::cout << "manager 1: " << geoManager_1 << '\n';
-    std::cout << "world 1:   " << geoManager_1->GetTopVolume() << '\n';
-
-    // auto* geoManager_2 = static_cast<TGeoManager*>(geoFile_2->Get("default"));
-
-    // std::cout << "manager 1: " << geoManager_1 << '\n';
-    // std::cout << "world 1:   " << geoManager_1->GetTopVolume() << '\n';
-
-
-    // std::cout << "manager 2: " << geoManager_2 << '\n';
-    // std::cout << "world 2:   " << geoManager_2->GetTopVolume() << '\n';
-
-    // Find top (world) volume
-    auto* worldVolume_1 = geoManager_1->GetTopVolume();
-    // auto* worldVolume_2 = geoManager_2->GetTopVolume();
-
-    worldVolume_1->GetNodes()->Dump();
-
-    auto* nodes = worldVolume_1->GetNodes();
-    auto* firstNode = nodes->At(0);
-    auto* firstNode_1 = static_cast<TGeoNode*>(firstNode);
-
-    // Select first node, need to cast since GetNodes returns a TObjArray
-    // auto* firstNode_1 = static_cast<TGeoNode*>(worldVolume_1->GetNodes()->At(0));
-    // auto* firstNode_2 = static_cast<TGeoNode*>(worldVolume_2->GetNodes()->At(0));
-
-    // // Select its volume
-    // auto* firstNode_volume = firstNode->GetVolume();
-
-    // Descend further into first layer
-    auto* layerNode_1 = static_cast<TGeoNode*>(firstNode_1->GetNodes()->At(0));
-    // auto* layerNode_2 = static_cast<TGeoNode*>(firstNode_2->GetNodes()->At(0));
-
-    // worldVolume->ls();
-    std::cout << " :::::::::::::: first node ::::::::::::::" << std::endl; 
-    // layerNode->Dump();
-
-    // auto layerNode_2Vector = constructChildrenVector(layerNode_2->GetNodes());
-    // traverseNode(layerNode_1, layerNode_2Vector);
-
-
-    // Testing PseudoShape
-    auto* testShape = layerNode_1->GetVolume()->GetShape();
-    std::cout << " :::::::::::::: Dumping Shape ::::::::::::::" << std::endl; 
-    testShape->Dump();
-    auto testPseudoShape = PseudoShape(testShape);
-    std::cout << " :::::::::::::: Dumping (Pseudo)Shape ::::::::::::::" << std::endl; 
-    std::cout<<testPseudoShape.fType<<std::endl;
-    for (auto param : testPseudoShape.fParams){
-        std::cout<<param<<std::endl;
+void printBanner(std::string message, std::string colorCode = "0") {
+    message = "<<" +  message + ">>";
+    if (message.size() > 60) {
+        std::cout << message << std::endl;
+        return;
     }
+    auto nPadding = 30 - message.size() / 2;   // std::size_t
+    std::cout << "\033[" + colorCode + "m" << std::string(nPadding, ':') + message + std::string(nPadding + !(message.size() % 2), ':') << "\033[0m" << std::endl;
+}
 
-    // Testing PseudoVolume
-    auto* testVolume = layerNode_1->GetVolume();
-    std::cout << " :::::::::::::: Dumping Volume ::::::::::::::" << std::endl; 
-    testVolume->Dump();
-    auto testPseudoVolume = PseudoVolume(testVolume->GetName(), std::vector<PseudoNode*>{}, testVolume->GetShape(), testVolume->GetMedium());
-    std::cout << " :::::::::::::: Dumping (Pseudo)Volume ::::::::::::::" << std::endl; 
-    std::cout<<testPseudoVolume.fName<<std::endl;
-    for (auto param : testPseudoVolume.fNodes){
-        std::cout<<param<<std::endl;
-    }
-    std::cout<<testPseudoVolume.fMedium<<std::endl;
-    std::cout<<testPseudoVolume.fShape.fType<<std::endl;
-    for (auto param : testPseudoVolume.fShape.fParams){
-        std::cout<<param<<std::endl;
+int main(int argc, char** argv) {
+     
+    // sourceFile -> file from which we build our geometry
+    // referenceFile -> file whose geometry we compare against
+
+    // Trivially parse input
+    if (argc != 3 ||
+            std::filesystem::path(argv[1]).extension() != ".root" ||
+            std::filesystem::path(argv[2]).extension() != ".root") {
+        std::cerr << "Usage: geoCompare <file1.root> <file2.root>\n";
+        return EXIT_FAILURE;
     }
     
-    // Testing PseudoNode
-    auto* testNode = static_cast<TGeoNode*>(layerNode_1->GetVolume()->GetNodes()->At(0));
-    std::cout << " :::::::::::::: Dumping Node ::::::::::::::" << std::endl; 
-    testNode->Dump();
-    auto testPseudoNode = PseudoNode(testNode->GetName(), &testPseudoVolume, nullptr); 
-    std::cout << " :::::::::::::: Dumping (Pseudo)Node ::::::::::::::" << std::endl; 
-    std::cout<<testPseudoNode.fName<<std::endl;
-    for (auto param : testPseudoNode.fVolume->fNodes){
-        std::cout<<param<<std::endl;
-    }
-    std::cout<<testPseudoNode.fVolume->fMedium<<std::endl;
-    std::cout<<testPseudoNode.fVolume->fShape.fType<<std::endl;
-    for (auto param : testPseudoNode.fVolume->fShape.fParams){
-        std::cout<<param<<std::endl;
-    }
 
-    // Testing PseudoManager
-    auto* testTopVolume = geoManager_1->GetTopVolume();
-    std::cout << " :::::::::::::: Dumping Top Volume ::::::::::::::" << std::endl; 
-    testTopVolume->Dump();
-    testTopVolume->GetShape()->Dump();
+    std::unique_ptr<TFile> inputFile(TFile::Open(argv[1]));
+    auto* inputGeoManager = static_cast<TGeoManager*>(inputFile->Get("default"));
+    auto* inputTopNode = inputGeoManager->GetTopNode();
 
-    auto testPseudoManager = PseudoManager(geoManager_1->GetTopVolume());
-    std::cout << " :::::::::::::: Dumping (Pseudo)Manager ::::::::::::::" << std::endl; 
-    std::cout<<testPseudoManager.fName<<std::endl;
-    std::cout<<testPseudoManager.fTopLevelVolume.fShape.fType<<std::endl;
-    for (auto param : testPseudoManager.fTopLevelVolume.fShape.fParams){
-        std::cout<<param<<std::endl;
-    }
 
-    std::cout << " ::::::::::::::<<Starting Traversal>>::::::::::::::" << std::endl; 
+    // PseudoGeometry manager (will hold "copy" of input geometry)
+    PseudoManager geometryManager{};
 
-    copyGeometry(layerNode_1);
+    printBanner("Building Geometry", "38;5;33");
 
-    // std::cout << "script skeleton" << std::endl;
-    // std::cout << geoManager_1->GetVisLevel() << std::endl;
+    copyGeometry(inputTopNode, nullptr, &geometryManager);
+    geometryManager.SyncNodesRemaining();
+
+    printBanner("Finished building Geometry", "32");
+    std::cout << "There are " << geometryManager.fNodes.size() << " nodes" << std::endl;
+    std::cout << "There are " << geometryManager.fVolumes.size() << " volumes" << std::endl;
+    std::cout << "TGeo -> There are " << inputGeoManager->GetNNodes() << " nodes" << std::endl;
+
+    // Careful: this replaces input file's TGeoManager!
+    std::unique_ptr<TFile> referenceFile(TFile::Open(argv[2]));
+    auto* referenceGeoManager = static_cast<TGeoManager*>(referenceFile->Get("default"));
+    auto* referenceTopNode = referenceGeoManager->GetTopNode();
     
+    printBanner("Auditing Geometry", "38;5;33");
+
+    // Auditing the same geo we just built. Show work trivially. Should repeat for copied file.
+    auditGeometry(referenceTopNode, nullptr, &geometryManager);
+
+    printBanner("Finished auditing Geometry", "32");
+
     return EXIT_SUCCESS;
 }
+
 
 
 
