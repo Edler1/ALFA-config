@@ -1,7 +1,11 @@
 #include "GeoUtils.h"
 #include <TGeoShape.h>
 #include <TGeoTube.h>
+#include <TGeoCone.h>
+#include <TGeoPgon.h>
+#include <TGeoArb8.h>
 #include <TGeoShapeAssembly.h>
+#include <TGeoCompositeShape.h>
 
 #include <algorithm>
 
@@ -11,21 +15,57 @@ PseudoShape::PseudoShape(const TGeoShape* shape) {
     if (!shape) throw std::invalid_argument("<<Shape is NULL>>");
     fType = typeid(*shape).name();
 
-    if (typeid(*shape) == typeid(TGeoTubeSeg)) {
+    if (typeid(*shape) == typeid(TGeoTube)) {
+
+        auto* tube = static_cast<const TGeoTube*>(shape);
+        fParams = {tube->GetRmin(), tube->GetRmax(), tube->GetDz()};
+
+    } else if (typeid(*shape) == typeid(TGeoTubeSeg)) { 
 
         auto* tubeSeg = static_cast<const TGeoTubeSeg*>(shape);
         fParams = {tubeSeg->GetPhi1(), tubeSeg->GetPhi2(), tubeSeg->GetRmin(), tubeSeg->GetRmax(), tubeSeg->GetDz()};
+
+    } else if (typeid(*shape) == typeid(TGeoConeSeg)) { 
+
+        auto* coneSeg = static_cast<const TGeoConeSeg*>(shape);
+        fParams = {coneSeg->GetDz(), coneSeg->GetRmin1(), coneSeg->GetRmax1(), coneSeg->GetRmin2(), coneSeg->GetRmax2(), coneSeg->GetPhi1(), coneSeg->GetPhi2()};
 
     } else if (typeid(*shape) == typeid(TGeoBBox)) { 
 
         auto* bBox = static_cast<const TGeoBBox*>(shape);
         fParams = {bBox->GetDX(), bBox->GetDY(), bBox->GetDZ()};
 
+    } else if (typeid(*shape) == typeid(TGeoPgon)) { 
+
+        auto* pgon = static_cast<const TGeoPgon*>(shape);
+        fParams = {pgon->GetPhi1(), pgon->GetDphi(), static_cast<double>(pgon->GetNz())};
+        for (int i{0}; i < pgon->GetNz(); ++i){
+            fParams.push_back(pgon->GetZ(i));
+            fParams.push_back(pgon->GetRmin(i));
+            fParams.push_back(pgon->GetRmax(i));
+        }
+
+    } else if (typeid(*shape) == typeid(TGeoArb8)) { 
+
+        auto* arb8 = static_cast<const TGeoArb8*>(shape);
+        fParams = {arb8->GetDz()};
+        auto* arb8Vertices = const_cast<TGeoArb8*>(arb8)->GetVertices();
+        for (size_t i{0}; i<8; ++i) {
+            fParams.push_back(arb8Vertices[2 * i]);
+            fParams.push_back(arb8Vertices[2 * i + 1]);
+        }
+
     } else if (typeid(*shape) == typeid(TGeoShapeAssembly)) { 
 
         // Note here we are only comparing the bounding box, not the actual shapes within the assembly
         auto* shapeAssembly = static_cast<const TGeoShapeAssembly*>(shape);
         fParams = {shapeAssembly->GetDX(), shapeAssembly->GetDY(), shapeAssembly->GetDZ()};
+
+    } else if (typeid(*shape) == typeid(TGeoCompositeShape)) { 
+
+        // Note here we are only comparing the bounding box, as above
+        auto* compositeShape = static_cast<const TGeoShapeAssembly*>(shape);
+        fParams = {compositeShape->GetDX(), compositeShape->GetDY(), compositeShape->GetDZ()};
 
     } else {
 

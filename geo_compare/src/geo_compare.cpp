@@ -49,6 +49,8 @@ PseudoNode* findNodePartner(const TGeoNode* node, std::vector<PseudoNode*>& pseu
         }
     }
 
+    if (!neighbour) throw std::runtime_error("No node found for <<" + static_cast<std::string>(node->GetName()) + ">>. Geometries do not match!");
+
     return neighbour;
 
 }
