@@ -4,6 +4,7 @@
 #include <TGeoCone.h>
 #include <TGeoPgon.h>
 #include <TGeoArb8.h>
+#include <TGeoHype.h>
 #include <TGeoShapeAssembly.h>
 #include <TGeoCompositeShape.h>
 
@@ -54,6 +55,16 @@ PseudoShape::PseudoShape(const TGeoShape* shape) {
             fParams.push_back(arb8Vertices[2 * i]);
             fParams.push_back(arb8Vertices[2 * i + 1]);
         }
+
+    } else if (typeid(*shape) == typeid(TGeoHype)) { 
+
+        auto* geoHype = static_cast<const TGeoHype*>(shape);
+        fParams = {geoHype->GetRmin(), geoHype->GetStIn(), geoHype->GetRmax(), geoHype->GetStOut(), geoHype->GetDz()};
+
+    } else if (typeid(*shape) == typeid(TGeoTrap)) { 
+
+        auto* trap = static_cast<const TGeoTrap*>(shape);
+        fParams = {trap->GetDz(), trap->GetTheta(), trap->GetPhi(), trap->GetH1(), trap->GetBl1(), trap->GetTl1(), trap->GetAlpha1(), trap->GetH2(), trap->GetBl2(), trap->GetTl2(), trap->GetAlpha2()};
 
     } else if (typeid(*shape) == typeid(TGeoShapeAssembly)) { 
 
