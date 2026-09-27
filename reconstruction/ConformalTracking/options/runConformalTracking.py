@@ -39,23 +39,23 @@ id_service = UniqueIDGenSvc("UniqueIDGenSvc")
 eds = EventDataSvc("EventDataSvc")
 
 geoservice = GeoSvc("GeoSvc")
-geoservice.detectors = [os.environ["K4GEO"]+"FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
 iosvc = IOSvc()
-iosvc.Input = "alfaTrackerDigi.root"
-iosvc.Output = "alfaTracker_conformal_tracking.root"
+iosvc.Input = "alfaTrackerDigitization.root"
+iosvc.Output = "alfaTrackerConformalTracking.root"
 
 
 tracking = ConformalTracking()
-tracking.TrackerHitCollectionNames = ["OTBarHits"]
+tracking.TrackerHitCollectionNames = ["OTBarDigiHits"]
 tracking.RelationsNames = ["OTBarHitRelations"]
 tracking.MCParticleCollectionName = ["MCParticles"]
 tracking.SiTrackCollectionName = "OTBarTracks"
 
 tracking.MainTrackerHitCollectionNames = []
-tracking.VertexBarrelHitCollectionNames = ["OTBarHits"]
+tracking.VertexBarrelHitCollectionNames = ["OTBarDigiHits"]
 tracking.VertexEndcapHitCollectionNames = []
 
 # tracking.DebugHits = "DebugHits"
@@ -77,7 +77,7 @@ CT_MAX_DIST = 0.05
 parameters = {
         #tightest cuts, builds fresh tracks from just the vertex barrel
         "Barrel": {
-            "collections": ["OTBarHits"],
+            "collections": ["OTBarDigiHits"],
             "params": {
                 "MaxCellAngle": 0.005, 
                 "MaxCellAngleRZ": 0.005,
@@ -116,7 +116,8 @@ root_hist_svc.FileName = "conformal_tracking_hist.root"
 ApplicationMgr(
     TopAlg=[tracking],
     EvtSel="NONE",
-    EvtMax=-1,
+    # EvtMax=-1,
+    EvtMax=100,
     ExtSvc=[eds, geoservice, root_hist_svc],
     OutputLevel=INFO,
 )

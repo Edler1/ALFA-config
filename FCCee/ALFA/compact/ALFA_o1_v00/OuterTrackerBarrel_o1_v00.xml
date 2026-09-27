@@ -26,6 +26,7 @@
         <vis name="OTBarHDIVis" alpha="1.0" r="1.000" g="0.500" b="0.000" showDaughters="true" visible="false"/>
         <vis name="OTBarFlexVis" alpha="1.0" r="1.000" g="0.000" b="1.000" showDaughters="true" visible="false"/>
         <vis name="OTBarSupportPlateVis" alpha="1.0" r="0.41" g="0.51" b="0.59" showDaughters="true" visible="false"/>
+        <vis name="OTBarConnectorVis" alpha="1.0" r="0.0" g="0.0" b="0.0" showDaughters="true" visible="false"/>
 
         <!-- <vis name="OTBarCoolingPipeVis"       alpha="1.0" r="1.0" g="1.0" b="1.0" showDaughters="true" visible="true"/> -->
         <!-- <vis name="OTBarCoolingFluidVis"        alpha="1.0" r="0.0" g="0.0" b="1.0" showDaughters="true" visible="true"/> -->
@@ -35,38 +36,32 @@
         <!-- <vis name="OTBarHDIVis" alpha="1.0" r="1.000" g="0.500" b="0.000" showDaughters="true" visible="true"/> -->
         <!-- <vis name="OTBarFlexVis" alpha="1.0" r="1.000" g="0.000" b="1.000" showDaughters="true" visible="true"/> -->
         <!-- <vis name="OTBarSupportPlateVis" alpha="1.0" r="0.41" g="0.51" b="0.59" showDaughters="true" visible="true"/> -->
+        <!-- <vis name="OTBarConnectorVis" alpha="1.0" r="0.0" g="0.0" b="0.0" showDaughters="true" visible="true"/> -->
 
 
     </display>
 
 
-    <comment> Barrel parameters (single layer) </comment>
+    <comment> Barrel parameters </comment>
     <define>
         <constant name="DetID_OTBar_Barrel"   value="67"/>   
         <constant name="OTBar_inner_radius"   value="500*mm"/>   
-        <constant name="OTBar_outer_radius"   value="2000*mm"/>
-
-        <constant name="OTBar_tolerance"      value="0.05*mm"/>
-        <constant name="OTBar_holder_width"   value="10.0*mm"/>
-        <constant name="OTBar_stave_overlap"  value="2.0*mm"/>
-        <constant name="OTBar_nGroupingModules" value="1"/> <comment> Arbitrarily large number since not used </comment>
+        <constant name="OTBar_outer_radius"   value="1800*mm"/>
+        <constant name="OTBar_nGroupingModules" value="1"/> 
     </define>
 
     <comment> Sensor parameters </comment>
     <define>
         <constant name="OTBar_sens_rphi"    value="25.0*mm"/>
-        <constant name="OTBar_sens_rphi_periphery"    value="0.12*mm"/>
+        <constant name="OTBar_sens_rphi_periphery"    value="1.2*mm"/>
         <constant name="OTBar_sens_rphi_sensitive"    value="OTBar_sens_rphi - OTBar_sens_rphi_periphery"/>
         <constant name="OTBar_sens_rphi_spacing" value="0.05*mm"/>
         <constant name="OTBar_sens_z"       value="32.0*mm"/>
-        <!-- <constant name="OTBar_sens_z_periphery"       value="2.4*mm"/> -->
-        <!-- <constant name="OTBar_sens_z_sensitive"       value="OTBar_sens_z"/> -->
         <constant name="OTBar_sens_z_spacing"    value="0.05*mm"/>
 
         <constant name="OTBar_Sensitive_thickness" value="0.05*mm"/>
 
         <comment> Module parameters </comment>
-        <!-- <constant name="OTBar_mod_z_periphery"   value="2.0 * OTBar_sens_z_periphery + OTBar_sens_z_spacing"/> -->
         <constant name="OTBar_mod_z"             value="4.0 * OTBar_sens_z"/>
         <constant name="OTBar_mod_z_spacing"             value="0.1*mm"/> <comment> This describes the clearance between modules in z </comment>
         <constant name="OTBar_mod_rphi_periphery"   value="2.0 * OTBar_sens_rphi_periphery + OTBar_sens_rphi_spacing"/>
@@ -76,20 +71,13 @@
         <constant name="OTBar_sens_Copper_width"    value="2.0 * OTBar_mod_rphi"/> 
         <constant name="OTBar_sens_Copper_thickness"    value="0.002*mm"/> <comment> Equivalent Copper on MAPS </comment>
 
-        <comment> Kept for compatibility, audit later </comment>
-        <!-- <constant name="OTBar_mod_rphi_spacing"      value="0.2*mm"/>     -->
-        <!-- <constant name="OTBar_mod_rphi_sensitive" value="OTBar_mod_rphi - OTBar_mod_rphi_spacing"/> -->
-
-        <!-- <constant name="OTBar_mod_overlap"       value="5.0*mm"/> -->
         <constant name="OTBar_mod_overlap"       value="0.0*mm"/>
 
-        <!-- <constant name="OTBar_mod_quad_spacing"      value="0.2*mm"/>    <comment> Distance between quads in r-phi </comment> -->
     </define>
 
     <comment> Passive volumes </comment>
     <define>
 
-        <!-- <constant name="OTBar_Cooling_Plate_width" value="2.0 * OTBar_mod_rphi + 2.0 * 0.4*mm"/> <comment> Note extra x 2 since two "true" modules are packed in rphi, 0.4 mm clearance between module edge and coldplate edge </comment> -->
         <constant name="OTBar_Cooling_Plate_width" value="2.0 * OTBar_mod_rphi + 2.0 * 0.4*mm"/> <comment> Note extra x 2 since two "true" modules are packed in rphi, 0.4 mm clearance between module edge and coldplate edge </comment>
         <constant name="OTBar_Cooling_Plate_CFleece_thickness" value="0.040*mm"/> <comment> Each plate corresponds to 0.02 mm </comment>
         <constant name="OTBar_Cooling_Plate_K13D2U_thickness" value="0.120*mm"/>
@@ -110,6 +98,17 @@
         <constant name="OTBar_HDI_Prepreg_thickness" value="0.045*mm"/>
         <constant name="OTBar_HDI_thickness" value="OTBar_HDI_Coverlay_thickness + OTBar_HDI_Aluminium_thickness + OTBar_HDI_Prepreg_thickness"/>
 
+
+        <constant name="OTBar_HDI_Connector_Data_z" value="3.5*mm"/>
+        <constant name="OTBar_HDI_Connector_Data_rphi" value="2.7*mm"/>
+        <constant name="OTBar_HDI_Connector_Data_rphi_offset" value="1.4*mm"/>
+        <constant name="OTBar_HDI_Connector_Data_LCP_thickness" value="2.4375*mm"/>
+
+        <constant name="OTBar_HDI_Connector_Power_z" value="2.7*mm"/>
+        <constant name="OTBar_HDI_Connector_Power_z_offset" value="1.61*mm"/>
+        <constant name="OTBar_HDI_Connector_Power_rphi" value="4.3*mm"/>
+        <constant name="OTBar_HDI_Connector_Power_LCP_thickness" value="2.4375*mm"/>
+
         <constant name="OTBar_Flex_width" value="32.0*mm"/>
         <constant name="OTBar_Flex_Kapton_thickness" value="0.025*mm"/>
         <constant name="OTBar_Flex_Coverlay_thickness" value="0.040*mm"/>
@@ -127,7 +126,7 @@
         <constant name="OTBar_Support_Foam_filled_half_length" value="58.9*mm - 15.0*mm"/> <comment> Assume filled volume of support foam is 58.9 mm - 15 mm clearance </comment>
 
         <constant name="OTBar_Stave_thickness" value="OTBar_Cooling_Plate_thickness + OTBar_Sensitive_thickness + OTBar_sens_Copper_thickness + OTBar_HDI_thickness + OTBar_Flex_thickness"/>
-        <constant name="OTBar_Stave_width" value="2.0 * OTBar_mod_rphi"/> <comment> Doubling here since two modules in nx </comment>
+        <constant name="OTBar_Stave_width" value="OTBar_Cooling_Plate_width"/> <comment> Doubling here since two modules in nx </comment>
         <constant name="OTBar_module_distance_sides" value="0."/> <comment> Assume no shingling for now </comment>
 
 
@@ -138,12 +137,9 @@
 
         <comment> Layer MID 1 parameters </comment>
         <constant name="OTBar_nStaves1" value="52."/> <comment> This should be the quantity from which the rest are derived? </comment>
-        <!-- <constant name="OTBar_r1" value="OTBar_inner_radius + 15*mm"/> -->
         <constant name="OTBar_r1" value="766.7*mm"/>
         <constant name="OTBar_dr" value="5.0*mm"/> <comment> Radial offset of every second stave </comment>
-        <!-- <constant name="OTBar_nModules1" value="ceil(2 * OTBar_half_length / (OTBar_mod_z - OTBar_mod_overlap))"/> <comment> Shouldn't this be the floor value? Shouldn't place more modules than we have space for </comment> -->
         <constant name="OTBar_nModules1" value="21"/> <comment> Input quantity : others are derived </comment>
-        <!-- <constant name="OTBar_nStaves1" value="ceil(2.*pi*OTBar_r1/(OTBar_mod_rphi_sensitive-OTBar_stave_overlap)/2.)"/> -->
         <constant name="OTBar_phiOffset1" value="0."/>
 
         <comment> Layer MID 2 parameters </comment>
@@ -174,9 +170,7 @@
 
     <readouts>
         <readout name="OTBarCollection">
-            <!-- <id>system:8,layer:4,module:10,sensor:-16</id> -->
-            <!-- <id>system:8,layer:4,side:2,module:8,sensor:-16</id> -->
-            <id>system:8,layer:3,side:2,type:2,module:16,sensor:16</id>
+            <id>${GlobalTrackerReadoutID}</id>
         </readout>
     </readouts>
 
@@ -189,15 +183,15 @@
                        dz="OTBar_half_length" material="Air"/>
             </envelope>
 
-            <!-- <type_flags type="DetType_TRACKER + DetType_PIXEL + DetType_BARREL"/> -->
-            <type_flags type="67"/>
+            <type_flags type="DetType_TRACKER + DetType_PIXEL + DetType_BARREL"/>
 
             <comment> Single Stave Definition </comment>
+
+              
             <stave name="OTBarStave_single" length="2.*OTBar_half_length" 
-                   dr="OTBar_module_distance_sides" 
-                   motherVolWidth="OTBar_Stave_width" 
-                   motherVolThickness="2.0 * OTBar_Stave_thickness + OTBar_Support_Foam_thickness" 
-                   vis="OTBarStaveVis">
+              dr="OTBar_module_distance_sides" 
+              vis="OTBarStaveVis"
+              layer_id="unique">
 
             <comment> Bot String </comment>
 
@@ -224,16 +218,11 @@
                 </components>
                 <comment> Do not subdivide Copper layer, since gaps are less than .1 mm </comment>
 
-                <!-- <comment> Sensor Placeholder </comment> -->
-                <!-- <components name="SensorPlaceholder" r="OTBar_Flex_thickness + OTBar_HDI_thickness + OTBar_sens_Copper_thickness" offset="0." length="OTBar_half_length"> -->
-                <!--     <component thickness="OTBar_Sensitive_thickness" width="2. * OTBar_mod_rphi" r="0." material="Si" vis="OTBarPeripheryVis"/> -->
-                <!-- </components> -->
-                <!-- <comment> Placholder Silicon till bottom sensor strings are implemented </comment> -->
-
                 <comment> Sensor </comment>
                 <sensor name="OTBarSensor" r="OTBar_Flex_thickness + OTBar_HDI_thickness + OTBar_sens_Copper_thickness" thickness="OTBar_Sensitive_thickness" material="Silicon" nx="2." nGroupingModules="OTBar_nGroupingModules">
                     <include ref="OuterTracker_module.xml"/>
                 </sensor>
+                <comment> Note: Bot sensors should appear first, in order to have layer_id monotonically increasing w/ radius </comment>
                 <comment> Looks ok, update: module dimensions, module number (following stave geometry updates above), module periphery,  ? </comment>
                 <comment> Are sensor planes direction agnostic? </comment>
 
@@ -313,6 +302,11 @@
                 <comment> Sensor </comment>
                 <sensor name="OTBarSensor" r="OTBar_Stave_thickness + OTBar_Support_Foam_thickness + OTBar_Cooling_Plate_thickness" thickness="OTBar_Sensitive_thickness" material="Silicon" nx="2." nGroupingModules="OTBar_nGroupingModules">
                     <include ref="OuterTracker_module.xml"/>
+
+                    <comment> Moved to module definition above, since geo builder does not support .xml and inline both as handles </comment>
+                    <!-- <comment> Include HDI connectors here, since these are localized and repeated across modules </comment> -->
+                    <!-- <component name="OTBar_HDI_Connector_Data_LCP"  sensitive="False" r="OTBar_Sensitive_thickness + OTBar_sens_Copper_thickness" thickness="OTBar_HDI_Connector_Data_LCP_thickness" ymin="-OTBar_HDI_Connector_Data_LCP_z / 2." ymax="OTBar_HDI_Connector_Data_LCP_z / 2." xmin="-OTBar_HDI_Connector_Data_LCP_rphi / 2." xmax="OTBar_HDI_Connector_Data_LCP_rphi / 2." vis="OTBarConnectorVis"/> -->
+
                 </sensor>
                 <comment> Looks ok, update: module dimensions, module number (following stave geometry updates above), module periphery,  ? </comment>
 
@@ -342,16 +336,6 @@
 
             </stave>
 
-            <!-- <comment> Test Layer </comment> -->
-            <!-- <layer nLadders="4"  -->
-            <!--        r="OTBar_r1"  -->
-            <!--        dr="OTBar_dr"  -->
-            <!--        id="0"  -->
-            <!--        nmodules="OTBar_nModules1"  -->
-            <!--        name="OTBarStave_single"  -->
-            <!--        step="OTBar_mod_z_spacing"  -->
-            <!--        phi0="OTBar_phiOffset1"/> -->
-
             <comment> Layer MID 1 </comment>
             <layer nLadders="OTBar_nStaves1" 
                    r="OTBar_r1" 
@@ -375,7 +359,7 @@
             <layer nLadders="OTBar_nStaves4" 
                    r="OTBar_r4" 
                    dr="OTBar_dr" 
-                   id="3" 
+                   id="2" 
                    nmodules="OTBar_nModules4" 
                    name="OTBarStave_single" 
                    step="OTBar_mod_z_spacing" 
@@ -384,7 +368,7 @@
             <layer nLadders="OTBar_nStaves5" 
                    r="OTBar_r5" 
                    dr="OTBar_dr" 
-                   id="4" 
+                   id="3" 
                    nmodules="OTBar_nModules5" 
                    name="OTBarStave_single" 
                    step="OTBar_mod_z_spacing" 

@@ -39,13 +39,23 @@ PseudoShape::PseudoShape(const TGeoShape* shape) {
     } else if (typeid(*shape) == typeid(TGeoPgon)) { 
 
         auto* pgon = static_cast<const TGeoPgon*>(shape);
-        fParams = {pgon->GetPhi1(), pgon->GetDphi(), static_cast<double>(pgon->GetNz())};
+        fParams = {pgon->GetPhi1(), pgon->GetDphi(), static_cast<double>(pgon->GetNedges()), static_cast<double>(pgon->GetNz())};
         for (int i{0}; i < pgon->GetNz(); ++i){
             fParams.push_back(pgon->GetZ(i));
             fParams.push_back(pgon->GetRmin(i));
             fParams.push_back(pgon->GetRmax(i));
         }
 
+    } else if (typeid(*shape) == typeid(TGeoPcon)) {
+
+        auto* pcon = static_cast<const TGeoPcon*>(shape);
+        fParams = {pcon->GetPhi1(), pcon->GetDphi(), static_cast<double>(pcon->GetNz())};
+        for (int i{0}; i < pcon->GetNz(); ++i) {
+            fParams.push_back(pcon->GetZ(i));
+            fParams.push_back(pcon->GetRmin(i));
+            fParams.push_back(pcon->GetRmax(i));
+        }
+    
     } else if (typeid(*shape) == typeid(TGeoArb8)) { 
 
         auto* arb8 = static_cast<const TGeoArb8*>(shape);

@@ -32,7 +32,6 @@ bool auditHits(const auto& sourceHits, const auto& referenceHits) {
 
         if (src.getCellID() != ref.getCellID()) return false;
 
-        // Cache 3D vectors to avoid repeated member function calls
         const auto& p1 = src.getPosition();
         const auto& p2 = ref.getPosition();
         if (std::abs(p1[0] - p2[0]) > TOLERANCE || 
@@ -79,7 +78,10 @@ int main(int argc, char** argv) {
     }
 
     auto sourceReader = podio::makeReader(argv[1]);
+    [[maybe_unused]] const auto nEventsSource = sourceReader.getEvents(); // Necesssary for forcing init of reader (bug)
+
     auto referenceReader = podio::makeReader(argv[2]);
+    [[maybe_unused]] const auto nEventsReference = referenceReader.getEvents();
 
 
     printBanner("Starting <<SimTrackerHits>> comparison", "38;5;33");
@@ -89,7 +91,9 @@ int main(int argc, char** argv) {
 
 
     bool pEvent = false;
+    // std::cout << "SourceFile has <" << sourceReader.getEvents() << "> events" << std::endl;
     for (size_t i = 0; i < sourceReader.getEvents(); ++i) {
+
 
         auto sourceEvent = sourceReader.readEvent(i);
         auto referenceEvent = referenceReader.readEvent(i);

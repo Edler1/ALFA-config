@@ -1,34 +1,18 @@
-<!-- 
-    Sensor components of the silicon outer tracker barrel or disk
--->
 <lccdd>
 
-    <component name="Left_Sensor_Column"  sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="-OTBar_mod_rphi / 2."        xmax="-OTBar_mod_rphi_periphery / 2." vis="OTBarSensitiveVis"/>
-    <component name="Right_Sensor_Column"  sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="+OTBar_mod_rphi_periphery / 2."        xmax="OTBar_mod_rphi / 2." vis="OTBarSensitiveVis"/>
-    <component name="Sensor_Periphery" sensitive="False" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2."                       xmin="-OTBar_mod_rphi_periphery" xmax="OTBar_mod_rphi_periphery" vis="OTBarPeripheryVis"/>
+    <comment> Sensor components of the silicon outer tracker barrel and disk </comment>
+
+    <component name="Left_Sensor_Column" sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="-OTBar_mod_rphi / 2." xmax="-OTBar_mod_rphi_periphery / 2." vis="OTBarSensitiveVis"/>
+    <component name="Right_Sensor_Column" sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="+OTBar_mod_rphi_periphery / 2." xmax="OTBar_mod_rphi / 2." vis="OTBarSensitiveVis"/>
+    <component name="Sensor_Periphery" sensitive="False" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="-OTBar_mod_rphi_periphery / 2." xmax="OTBar_mod_rphi_periphery / 2." vis="OTBarPeripheryVis"/>
 
 
 
 
-    <!-- <comment> Hacky workaround when nx>1 not supported </comment> -->
+    <!-- <comment> Include HDI connectors here, since these are localized and repeated across modules </comment> -->
     <!---->
-    <!-- <comment> "Left" Module Definition </comment> -->
-    <!-- <component name="Left_Sensor_Row"  sensitive="True" ymin="-SiWr_mod_z / 2." ymax="SiWr_mod_z / 2." xmin="-SiWr_mod_rphi_spacing / 2. - SiWr_mod_rphi"        xmax="-SiWr_mod_rphi_spacing / 2. - SiWr_sens_rphi_sensitive - SiWr_mod_rphi_periphery" vis="SiWrSensitiveVis"/> -->
-    <!-- <component name="Right_Sensor_Row"  sensitive="True" ymin="-SiWr_mod_z / 2." ymax="SiWr_mod_z / 2." xmin="-SiWr_mod_rphi_spacing / 2. - SiWr_sens_rphi_sensitive"        xmax="-SiWr_mod_rphi_spacing / 2." vis="SiWrSensitiveVis"/> -->
+    <!-- <component name="OTBar_HDI_Connector_Data_LCP"  sensitive="False" r="OTBar_Sensitive_thickness + OTBar_sens_Copper_thickness" thickness="OTBar_HDI_Connector_Data_LCP_thickness" ymin="-OTBar_HDI_Connector_Data_z / 2." ymax="OTBar_HDI_Connector_Data_z / 2." xmin="-OTBar_mod_rphi / 2. + OTBar_HDI_Connector_Data_rphi_offset" xmax="-OTBar_mod_rphi / 2. + OTBar_HDI_Connector_Data_rphi + OTBar_HDI_Connector_Data_rphi_offset" vis="OTBarConnectorVis"/> -->
     <!---->
-    <!-- <comment> Note that the periphery includes the peripheries of rphi-adjacent sensors, and their spacing/clearance </comment> -->
-    <!-- <component name="Sensor_Periphery" sensitive="False" ymin="-SiWr_mod_z / 2." ymax="SiWr_mod_z / 2."                       xmin="-SiWr_mod_rphi_spacing / 2. - SiWr_sens_rphi_sensitive - SiWr_mod_rphi_periphery" xmax="-SiWr_mod_rphi_spacing / 2. - SiWr_sens_rphi_sensitive" vis="SiWrPeripheryVis"/> -->
-    <!---->
-    <!-- <comment> "Right" Module Definition </comment> -->
-    <!-- <component name="Left_Sensor_Row"  sensitive="True" ymin="-SiWr_mod_z / 2." ymax="SiWr_mod_z / 2." xmin="+SiWr_mod_rphi_spacing / 2."        xmax="+SiWr_mod_rphi_spacing / 2. + SiWr_sens_rphi_sensitive" vis="SiWrSensitiveVis"/> -->
-    <!-- <component name="Right_Sensor_Row"  sensitive="True" ymin="-SiWr_mod_z / 2." ymax="SiWr_mod_z / 2." xmin="+SiWr_mod_rphi_spacing / 2. + SiWr_sens_rphi_sensitive + SiWr_mod_rphi_periphery"        xmax="+SiWr_mod_rphi_spacing / 2. + SiWr_mod_rphi" vis="SiWrSensitiveVis"/> -->
-    <!---->
-    <!-- <comment> Note that the periphery includes the peripheries of rphi-adjacent sensors, and their spacing/clearance </comment> -->
-    <!-- <component name="Sensor_Periphery" sensitive="False" ymin="-SiWr_mod_z / 2." ymax="SiWr_mod_z / 2."                       xmin="+SiWr_mod_rphi_spacing / 2. + SiWr_sens_rphi_sensitive" xmax="+SiWr_mod_rphi_spacing / 2. + SiWr_sens_rphi_sensitive + SiWr_mod_rphi_periphery" vis="SiWrPeripheryVis"/> -->
-
-
-
-
-
+    <!-- <component name="OTBar_HDI_Connector_Power_LCP"  sensitive="False" r="OTBar_Sensitive_thickness + OTBar_sens_Copper_thickness" thickness="OTBar_HDI_Connector_Power_LCP_thickness" ymin="-OTBar_mod_z / 2. + OTBar_HDI_Connector_Power_z_offset" ymax="-OTBar_mod_z / 2. + OTBar_HDI_Connector_Power_z + OTBar_HDI_Connector_Power_z_offset" xmin="-OTBar_HDI_Connector_Power_rphi / 2." xmax="OTBar_HDI_Connector_Power_rphi / 2." vis="OTBarConnectorVis"/> -->
 
 </lccdd>
