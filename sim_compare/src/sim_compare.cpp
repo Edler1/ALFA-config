@@ -68,14 +68,37 @@ int main(int argc, char** argv) {
 
     // sourceFile -> file which we wish to compare
     // referenceFile -> file whose simulation we compare against
+    //
+    // Collection names can be specified for SimTrackerHitCollection using "-collection <collectionName>"
 
+    std::vector<std::string> collections{}; // Collections to be compared between the two sim files. "OTBarCollection" as ALFA default
+
+    
     // Trivially parse input
-    if (argc != 3 ||
+    if (argc < 3 || 
+            argc % 2 == 0 ||
             std::filesystem::path(argv[1]).extension() != ".root" ||
             std::filesystem::path(argv[2]).extension() != ".root") {
         std::cerr << "Usage: simCompare <file1.root> <file2.root>\n";
+            std::cerr << "(optionally) Collections specified: simCompare <file1.root> <file2.root> -collection <collectionName1> -collection <collectionName2>\n";
         return EXIT_FAILURE;
     }
+    for (int i{3}; i < argc; i+=2) {
+        if (std::string_view(argv[i]) != "-collection") {
+            std::cerr << "Usage: simCompare <file1.root> <file2.root>\n";
+            std::cerr << "(optionally) Collections specified: simCompare <file1.root> <file2.root> -collection <collectionName1> -collection <collectionName2>\n";
+            return EXIT_FAILURE;
+        } else {
+            collections.push_back(argv[i + 1]);
+        }
+    }
+    if (collections.empty()) {
+        collections.push_back("OTBarCollection");
+        std::cerr << "No collections specified, defaulting to \"OTBarCollection\" (ALFA OT Barrel).\n";
+    }
+    
+
+
 
     auto sourceReader = podio::makeReader(argv[1]);
     [[maybe_unused]] const auto nEventsSource = sourceReader.getEvents(); // Necesssary for forcing init of reader (bug)
@@ -99,31 +122,30 @@ int main(int argc, char** argv) {
         auto referenceEvent = referenceReader.readEvent(i);
         // const auto& mcParticles = event.get<edm4hep::MCParticleCollection>("MCParticles");
 
-        const auto& sourceSimTrackerHits = sourceEvent.get<edm4hep::SimTrackerHitCollection>("OTBarCollection");
-        const auto& referenceSimTrackerHits = referenceEvent.get<edm4hep::SimTrackerHitCollection>("OTBarCollection");
+        for (const auto& collection : collections) {
 
-        // std::cout << "--processing event " << std::to_string(i) << "--" << std::endl;
-        // std::cout << sourceSimTrackerHits << std::endl;
-        // std::cout << referenceSimTrackerHits << std::endl;
-            
-
-        if (!auditHits(sourceSimTrackerHits, referenceSimTrackerHits)) throw std::runtime_error("<<Audit failed!>>");
-
-        // Print CellID of first event for reference
-        if (!pEvent && sourceSimTrackerHits.size() > 0) {
-        // if (sourceSimTrackerHits.size() > 0) {
-
-            const auto& sourceHit = sourceSimTrackerHits[0];
-            const auto& referenceHit = referenceSimTrackerHits[0];
-
-            std::cout << "Event " << i << " (example output):" << std::endl;
-            std::cout << "------------------" << std::endl;
-            std::cout << "CellID -> " << sourceHit.getCellID() << " vs " << referenceHit.getCellID() << std::endl;
-            std::cout << "Position -> (" << sourceHit.getPosition() << ") vs (" << referenceHit.getPosition() << ")" << std::endl;
-            std::cout << "------------------" << std::endl;
-            pEvent = true;
+            const auto& sourceSimTrackerHits = sourceEvent.get<edm4hep::SimTrackerHitCollection>(collection);
+            const auto& referenceSimTrackerHits = referenceEvent.get<edm4hep::SimTrackerHitCollection>(collection);
 
 
+            if (!auditHits(sourceSimTrackerHits, referenceSimTrackerHits)) throw std::runtime_error("<<Audit failed!>>");
+
+            // Print CellID of first event for reference
+            if (!pEvent && sourceSimTrackerHits.size() > 0) {
+                // if (sourceSimTrackerHits.size() > 0) {
+
+                const auto& sourceHit = sourceSimTrackerHits[0];
+                const auto& referenceHit = referenceSimTrackerHits[0];
+
+                std::cout << "Event " << i << " (example output):" << std::endl;
+                std::cout << "------------------" << std::endl;
+                std::cout << "CellID -> " << sourceHit.getCellID() << " vs " << referenceHit.getCellID() << std::endl;
+                std::cout << "Position -> (" << sourceHit.getPosition() << ") vs (" << referenceHit.getPosition() << ")" << std::endl;
+                std::cout << "------------------" << std::endl;
+                pEvent = true;
+
+
+            }
         }
             
 
