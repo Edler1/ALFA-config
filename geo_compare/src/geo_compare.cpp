@@ -23,14 +23,14 @@ bool compareNodes(const TGeoNode* node, const PseudoNode* pseudoNode) {
 void copyGeometry(const TGeoNode* node, PseudoVolume* motherPseudoVolume, PseudoManager* geometryManager) {
 
     // Define the pseudoNode and its pseudoVolume 
-    auto* pseudoNode = geometryManager->SpawnNode(node, motherPseudoVolume);
-    auto* pseudoVolume = pseudoNode->fVolume;
+    PseudoNode* pseudoNode = geometryManager->SpawnNode(node, motherPseudoVolume);
+    PseudoVolume* pseudoVolume = pseudoNode->fVolume;
 
     // Deepest node reached, no children
     if (!node->GetNodes()) return;
     
     // Loop over chlidren nodes for each node
-    for (auto* child : *(node->GetNodes())) {
+    for (TObject* child : *(node->GetNodes())) {
         copyGeometry(static_cast<const TGeoNode*>(child), pseudoVolume, geometryManager);
     }
 
@@ -62,13 +62,13 @@ void auditGeometry(const TGeoNode* node, PseudoVolume* motherPseudoVolume, Pseud
     if (!motherPseudoVolume && !compareNodes(node, geometryManager->fTopLevelNode)) throw std::runtime_error("<<Top level nodes are not equivalent>>");
 
     // Find pseudoNode that matches the TGeoNode among the neighbouring PseudoNodes (unless at top node, i.e. no motherPseudoVolume)
-    auto* pseudoNode = motherPseudoVolume ? findNodePartner(node, motherPseudoVolume->fNodesRemaining) : geometryManager->fTopLevelNode;
-    auto* pseudoVolume = pseudoNode->fVolume;
+    PseudoNode* pseudoNode = motherPseudoVolume ? findNodePartner(node, motherPseudoVolume->fNodesRemaining) : geometryManager->fTopLevelNode;
+    PseudoVolume* pseudoVolume = pseudoNode->fVolume;
 
     // Deepest node reached, no children
     if (!node->GetNodes()) return;
 
-    for (auto* child : *(node->GetNodes())) {
+    for (TObject* child : *(node->GetNodes())) {
         auditGeometry(static_cast<const TGeoNode*>(child), pseudoVolume, geometryManager);
     }
 
@@ -80,7 +80,7 @@ void printBanner(std::string message, std::string colorCode = "0") {
         std::cout << message << std::endl;
         return;
     }
-    auto nPadding = 30 - message.size() / 2;   // std::size_t
+    std::size_t nPadding = 30 - message.size() / 2;   
     std::cout << "\033[" + colorCode + "m" << std::string(nPadding, ':') + message + std::string(nPadding + !(message.size() % 2), ':') << "\033[0m" << std::endl;
 }
 
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 
     std::unique_ptr<TFile> inputFile(TFile::Open(argv[1]));
     auto* inputGeoManager = static_cast<TGeoManager*>(inputFile->Get("default"));
-    auto* inputTopNode = inputGeoManager->GetTopNode();
+    TGeoNode* inputTopNode = inputGeoManager->GetTopNode();
 
 
     // PseudoGeometry manager (will hold "copy" of input geometry)
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
     // Careful: this replaces input file's TGeoManager!
     std::unique_ptr<TFile> referenceFile(TFile::Open(argv[2]));
     auto* referenceGeoManager = static_cast<TGeoManager*>(referenceFile->Get("default"));
-    auto* referenceTopNode = referenceGeoManager->GetTopNode();
+    TGeoNode* referenceTopNode = referenceGeoManager->GetTopNode();
     
     printBanner("Auditing Geometry", "38;5;33");
 
