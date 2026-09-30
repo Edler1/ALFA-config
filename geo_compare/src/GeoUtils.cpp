@@ -193,7 +193,7 @@ PseudoNode* PseudoManager::SpawnNode(const TGeoNode* node, PseudoVolume* mother)
 }
 
 void PseudoManager::SyncNodesRemaining() {
-    for (const std::unique_ptr<PseudoVolume> volume : fVolumes) {
+    for (const std::unique_ptr<PseudoVolume>& volume : fVolumes) {
         volume->fNodesRemaining = volume->fNodes;
         // Reversing order for findNodePartner iteration in geo_compare.cpp
         std::reverse(volume->fNodesRemaining.begin(), volume->fNodesRemaining.end());
