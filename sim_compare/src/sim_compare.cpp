@@ -2,6 +2,7 @@
 #include <podio/Reader.h>
 #include <podio/ROOTReader.h>
 #include <edm4hep/SimTrackerHitCollection.h>
+#include <edm4hep/TrackerHitPlaneCollection.h>
 #include <edm4hep/MCParticleCollection.h>
 #include <TFile.h>
 #include <TH1D.h>
@@ -19,7 +20,86 @@
 constexpr float TOLERANCE = 1E-6;
 
 
-bool auditHits(const auto& sourceHits, const auto& referenceHits) {
+std::vector<std::pair<std::string, std::string>> queryCollections(podio::Reader& sourceReader, podio::Reader& referenceReader, const std::vector<std::string>& userCollections = {}) {
+
+    // Check files are non-empty and event number matches
+    if (sourceReader.getEvents() && sourceReader.getEvents() != referenceReader.getEvents()) throw std::runtime_error("<<Events do not match for source and reference files!>>");
+
+    // Query first event for reading collections
+    podio::Frame sourceEvent = sourceReader.readEvent(0);
+    podio::Frame referenceEvent = referenceReader.readEvent(0);
+
+    std::vector<std::pair<std::string, std::string>> collections{};
+
+    const std::vector<std::string> nameCollections = (userCollections.empty()) ? sourceEvent.getAvailableCollections() : userCollections;
+    for (const auto& collection : nameCollections) {
+
+        const podio::CollectionBase* sourceCollectionBase = sourceEvent.get(collection);
+        if (!sourceCollectionBase) throw std::runtime_error("<<Collection \"" + collection + "\" is NULL>>");
+
+        const podio::CollectionBase* referenceCollectionBase = referenceEvent.get(collection);
+        if (!referenceCollectionBase) throw std::runtime_error("<<Collection \"" + collection + "\" is NULL>>");
+
+        const std::string_view type = sourceCollectionBase->getTypeName();
+        if (referenceCollectionBase->getTypeName() != type) throw std::runtime_error("<source and reference collections \"" + collection +"\" type do not match!>>");
+
+        collections.emplace_back(collection, type);
+    }
+
+    return collections;
+
+}
+
+
+// Hit comparison for SimTrackerHits
+bool compareHit(const edm4hep::SimTrackerHit& sourceHit, const edm4hep::SimTrackerHit& referenceHit) {
+
+    if (sourceHit.getCellID() != referenceHit.getCellID()) return false;
+
+    const edm4hep::Vector3d& p1 = sourceHit.getPosition();
+    const edm4hep::Vector3d& p2 = referenceHit.getPosition();
+    if (std::abs(p1[0] - p2[0]) > TOLERANCE || 
+            std::abs(p1[1] - p2[1]) > TOLERANCE || 
+            std::abs(p1[2] - p2[2]) > TOLERANCE) return false;
+
+    const edm4hep::Vector3f& m1 = sourceHit.getMomentum();
+    const edm4hep::Vector3f& m2 = referenceHit.getMomentum();
+    if (std::abs(m1[0] - m2[0]) > TOLERANCE || 
+            std::abs(m1[1] - m2[1]) > TOLERANCE || 
+            std::abs(m1[2] - m2[2]) > TOLERANCE) return false;
+
+    if (std::abs(sourceHit.getEDep() - referenceHit.getEDep()) > TOLERANCE) return false;
+    return true;
+}
+
+
+// Hit comparison for TrackerHitPlaneCollection
+bool compareHit(const edm4hep::TrackerHitPlane& sourceHit, const edm4hep::TrackerHitPlane& referenceHit) {
+
+    if (sourceHit.getCellID() != referenceHit.getCellID()) return false;
+
+    const edm4hep::Vector3d& p1 = sourceHit.getPosition();
+    const edm4hep::Vector3d& p2 = referenceHit.getPosition();
+    if (std::abs(p1[0] - p2[0]) > TOLERANCE || 
+            std::abs(p1[1] - p2[1]) > TOLERANCE || 
+            std::abs(p1[2] - p2[2]) > TOLERANCE) return false;
+
+    const edm4hep::Vector2f& u1 = sourceHit.getU();
+    const edm4hep::Vector2f& u2 = referenceHit.getU();
+    if (std::abs(u1[0] - u2[0]) > TOLERANCE || 
+            std::abs(u1[1] - u2[1]) > TOLERANCE) return false;
+
+    const edm4hep::Vector2f& v1 = sourceHit.getV();
+    const edm4hep::Vector2f& v2 = referenceHit.getV();
+    if (std::abs(v1[0] - v2[0]) > TOLERANCE || 
+            std::abs(v1[1] - v2[1]) > TOLERANCE) return false;
+
+    if (std::abs(sourceHit.getEDep() - referenceHit.getEDep()) > TOLERANCE) return false;
+    return true;
+}
+
+template <typename T>
+bool auditHits(const T& sourceHits, const T& referenceHits) {
 
     if (sourceHits.size() != referenceHits.size()) return false;
     // If no hits in event, they trivially match
@@ -27,27 +107,12 @@ bool auditHits(const auto& sourceHits, const auto& referenceHits) {
 
 
     for (std::size_t i{0}; i < sourceHits.size(); ++i) {
-        const auto& src = sourceHits[i];
-        const auto& ref = referenceHits[i];
-
-        if (src.getCellID() != ref.getCellID()) return false;
-
-        const auto& p1 = src.getPosition();
-        const auto& p2 = ref.getPosition();
-        if (std::abs(p1[0] - p2[0]) > TOLERANCE || 
-            std::abs(p1[1] - p2[1]) > TOLERANCE || 
-            std::abs(p1[2] - p2[2]) > TOLERANCE) return false;
-
-        const auto& m1 = src.getMomentum();
-        const auto& m2 = ref.getMomentum();
-        if (std::abs(m1[0] - m2[0]) > TOLERANCE || 
-            std::abs(m1[1] - m2[1]) > TOLERANCE || 
-            std::abs(m1[2] - m2[2]) > TOLERANCE) return false;
-
-        if (std::abs(src.getEDep() - ref.getEDep()) > TOLERANCE) return false;
+        if (!compareHit(sourceHits[i], referenceHits[i])) return false;
     }
+
     return true;
 }
+
 
 
 void printBanner(std::string message, std::string colorCode = "0") {
@@ -56,7 +121,7 @@ void printBanner(std::string message, std::string colorCode = "0") {
         std::cout << message << std::endl;
         return;
     }
-    auto nPadding = 30 - message.size() / 2;   // std::size_t
+    std::size_t nPadding = 30 - message.size() / 2;   
     std::cout << "\033[" + colorCode + "m" << std::string(nPadding, ':') + message + std::string(nPadding + !(message.size() % 2), ':') << "\033[0m" << std::endl;
 }
 
@@ -71,7 +136,7 @@ int main(int argc, char** argv) {
     //
     // Collection names can be specified for SimTrackerHitCollection using "-collection <collectionName>"
 
-    std::vector<std::string> collections{}; // Collections to be compared between the two sim files. "OTBarCollection" as ALFA default
+    std::vector<std::string> userCollections{}; // Collections to be compared between the two sim files. "OTBarCollection" as ALFA default
 
     
     // Trivially parse input
@@ -89,53 +154,84 @@ int main(int argc, char** argv) {
             std::cerr << "(optionally) Collections specified: simCompare <file1.root> <file2.root> -collection <collectionName1> -collection <collectionName2>\n";
             return EXIT_FAILURE;
         } else {
-            collections.push_back(argv[i + 1]);
+            userCollections.push_back(argv[i + 1]);
         }
     }
-    if (collections.empty()) {
-        collections.push_back("OTBarCollection");
-        std::cerr << "No collections specified, defaulting to \"OTBarCollection\" (ALFA OT Barrel).\n";
+    if (userCollections.empty()) {
+        // Maybe make default behaviour simply check all collections? use pEvent and getAvailableCollections
+        std::cerr << "No collections specified, defaulting to  all collections.\n";
     }
     
 
 
 
     auto sourceReader = podio::makeReader(argv[1]);
-    [[maybe_unused]] const auto nEventsSource = sourceReader.getEvents(); // Necesssary for forcing init of reader (bug)
+    [[maybe_unused]] const std::size_t nEventsSource = sourceReader.getEvents(); // Necesssary for forcing init of reader (bug)
 
     auto referenceReader = podio::makeReader(argv[2]);
-    [[maybe_unused]] const auto nEventsReference = referenceReader.getEvents();
+    [[maybe_unused]] const std::size_t nEventsReference = referenceReader.getEvents();
+
+
+
+
+
+
+    std::vector<std::pair<std::string, std::string>> collections = queryCollections(sourceReader, referenceReader, userCollections);
+
+
+
 
 
     printBanner("Starting <<SimTrackerHits>> comparison", "38;5;33");
 
 
-    if (sourceReader.getEvents() != referenceReader.getEvents()) std::cerr << "<<Events do not match for source and reference files!>>\n";
-
-
     bool pEvent = false;
-    // std::cout << "SourceFile has <" << sourceReader.getEvents() << "> events" << std::endl;
     for (size_t i = 0; i < sourceReader.getEvents(); ++i) {
 
 
-        auto sourceEvent = sourceReader.readEvent(i);
-        auto referenceEvent = referenceReader.readEvent(i);
+
+        const podio::Frame sourceEvent = sourceReader.readEvent(i);
+        const podio::Frame referenceEvent = referenceReader.readEvent(i);
         // const auto& mcParticles = event.get<edm4hep::MCParticleCollection>("MCParticles");
 
-        for (const auto& collection : collections) {
 
-            const auto& sourceSimTrackerHits = sourceEvent.get<edm4hep::SimTrackerHitCollection>(collection);
-            const auto& referenceSimTrackerHits = referenceEvent.get<edm4hep::SimTrackerHitCollection>(collection);
+        
 
 
-            if (!auditHits(sourceSimTrackerHits, referenceSimTrackerHits)) throw std::runtime_error("<<Audit failed!>>");
+        
+
+
+        // for (const auto& [collection, type] : collections) {
+        for (auto it = collections.begin(); it != collections.end();) {
+
+            const std::string& collection = it->first;
+            const std::string& type = it->second;
+
+
+            const podio::CollectionBase* sourceCollectionBase = sourceEvent.get(collection);
+            const podio::CollectionBase* referenceCollectionBase = referenceEvent.get(collection);
+
+            
+
+
+            if (type == "edm4hep::SimTrackerHitCollection") {
+                if (!auditHits(static_cast<const edm4hep::SimTrackerHitCollection&>(*sourceCollectionBase), static_cast<const edm4hep::SimTrackerHitCollection&>(*referenceCollectionBase))) throw std::runtime_error("<<Audit failed!>>");
+                ++it;
+            } else if (type == "edm4hep::TrackerHitPlaneCollection") {
+                if (!auditHits(static_cast<const edm4hep::TrackerHitPlaneCollection&>(*sourceCollectionBase), static_cast<const edm4hep::TrackerHitPlaneCollection&>(*referenceCollectionBase))) throw std::runtime_error("<<Audit failed!>>");
+                ++it;
+            } else {
+                std::cerr << "Collection \"" << collection << "\" of type <" << type << "> is skipped (type not implemented).\n";
+                collections.erase(it);
+            }
+
+
 
             // Print CellID of first event for reference
-            if (!pEvent && sourceSimTrackerHits.size() > 0) {
-                // if (sourceSimTrackerHits.size() > 0) {
+            if (!pEvent && sourceCollectionBase->size() > 0 && type == "edm4hep::SimTrackerHitCollection") {
 
-                const auto& sourceHit = sourceSimTrackerHits[0];
-                const auto& referenceHit = referenceSimTrackerHits[0];
+                const auto& sourceHit = static_cast<const edm4hep::SimTrackerHitCollection&>(*sourceCollectionBase)[0];
+                const auto& referenceHit = static_cast<const edm4hep::SimTrackerHitCollection&>(*referenceCollectionBase)[0];
 
                 std::cout << "Event " << i << " (example output):" << std::endl;
                 std::cout << "------------------" << std::endl;
@@ -146,10 +242,10 @@ int main(int argc, char** argv) {
 
 
             }
+
         }
             
 
-        // std::cout << "event leaded, simTrackerHits -> " << sourceSimTrackerHits << std::endl;
     }
     printBanner("Finished comparison", "32");
 
