@@ -24,22 +24,34 @@ import os
 id_service = UniqueIDGenSvc("UniqueIDGenSvc")
 
 geoservice = GeoSvc("GeoSvc")
-geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+# geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+geoservice.detectors = ["/home/edi/Software/ALFA-config/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
-digi = DDPlanarDigi()
-digi.SubDetectorName = "OTBar"    
-digi.IsStrip = False
+otbar_digi = DDPlanarDigi("OTBardigitizer")
+otbar_digi.SubDetectorName = "OTBar"    
+otbar_digi.IsStrip = False
 #Smearing resolution in mm applied along the two local directions on eachs ensor plane. 
-digi.ResolutionU = [0.003]   # mm
-digi.ResolutionV = [0.003]
-digi.SimTrackHitCollectionName = ["OTBarCollection"] #input collection name; change it according to the root file 
+otbar_digi.ResolutionU = [0.003]   # mm
+otbar_digi.ResolutionV = [0.003]
+otbar_digi.SimTrackHitCollectionName = ["OTBarCollection"] #input collection name; change it according to the root file 
 #output container storing the relation btw each digi hit and its corresponsding sim hit so as to trace back which MC hit produced the digi hit 
-digi.SimTrkHitRelCollection = ["OTBarHitRelations"]
-digi.TrackerHitCollectionName = ["OTBarDigiHits"] # conatiner for new digi hits after smearing 
+otbar_digi.SimTrkHitRelCollection = ["OTBarHitRelations"]
+otbar_digi.TrackerHitCollectionName = ["OTBarDigiHits"] # container for new digi hits after smearing 
+otbar_digi.ForceHitsOntoSurface = True
 
-digi.ForceHitsOntoSurface = True
+vtx_digi = DDPlanarDigi("VTXdigitizer")
+vtx_digi.SubDetectorName = "VTX"    
+vtx_digi.IsStrip = False
+#Smearing resolution in mm applied along the two local directions on eachs ensor plane. 
+vtx_digi.ResolutionU = [0.003]   # mm
+vtx_digi.ResolutionV = [0.003]
+vtx_digi.SimTrackHitCollectionName = ["VTXCollection"] #input collection name; change it according to the root file 
+#output container storing the relation btw each digi hit and its corresponsding sim hit so as to trace back which MC hit produced the digi hit 
+vtx_digi.SimTrkHitRelCollection = ["VTXHitRelations"]
+vtx_digi.TrackerHitCollectionName = ["VTXDigiHits"] # container for new digi hits after smearing 
+vtx_digi.ForceHitsOntoSurface = True
 
 iosvc = IOSvc()
 iosvc.Input = "alfaTrackerSimulation.root"
@@ -51,7 +63,7 @@ root_hist_svc = RootHistoSink("RootHistoSink") #writes histos diretcly to a root
 root_hist_svc.FileName = "ddplanardigi_hist.root"
 
 #TopAlg : algo executed once per event
-ApplicationMgr(TopAlg=[digi],
+ApplicationMgr(TopAlg=[otbar_digi, vtx_digi],
                EvtSel="NONE",
                EvtMax=-1,
                ExtSvc=[EventDataSvc("EventDataSvc"), root_hist_svc],

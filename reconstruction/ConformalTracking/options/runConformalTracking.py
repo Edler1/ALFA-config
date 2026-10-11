@@ -39,7 +39,8 @@ id_service = UniqueIDGenSvc("UniqueIDGenSvc")
 eds = EventDataSvc("EventDataSvc")
 
 geoservice = GeoSvc("GeoSvc")
-geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+# geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+geoservice.detectors = ["/home/edi/Software/ALFA-config/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
@@ -49,13 +50,15 @@ iosvc.Output = "alfaTrackerConformalTracking.root"
 
 
 tracking = ConformalTracking()
-tracking.TrackerHitCollectionNames = ["OTBarDigiHits"]
-tracking.RelationsNames = ["OTBarHitRelations"]
+tracking.TrackerHitCollectionNames = ["VTXDigiHits", "OTBarDigiHits"]
+# tracking.TrackerHitCollectionNames = ["VTXDigiHits"]
+tracking.RelationsNames = ["VTXHitRelations", "OTBarHitRelations"]
+# tracking.RelationsNames = ["VTXHitRelations"]
 tracking.MCParticleCollectionName = ["MCParticles"]
-tracking.SiTrackCollectionName = "OTBarTracks"
+tracking.SiTrackCollectionName = "Tracks"
 
-tracking.MainTrackerHitCollectionNames = []
-tracking.VertexBarrelHitCollectionNames = ["OTBarDigiHits"]
+tracking.MainTrackerHitCollectionNames = ["OTBarDigiHits"]
+tracking.VertexBarrelHitCollectionNames = ["VTXDigiHits"]
 tracking.VertexEndcapHitCollectionNames = []
 
 # tracking.DebugHits = "DebugHits"
@@ -71,18 +74,20 @@ tracking.ThetaRange = 0.05
 tracking.TooManyTracks = 100000
 tracking.trackPurity = 0.7
 
+
 CT_MAX_DIST = 0.05
 
 # The keys (VXDBarrel, VXDEndcap...) are simply names and are not passed to ConformalTracking
 parameters = {
         #tightest cuts, builds fresh tracks from just the vertex barrel
         "Barrel": {
-            "collections": ["OTBarDigiHits"],
+            # "collections": ["VTXDigiHits", "OTBarDigiHits"],
+            "collections": ["VTXDigiHits"],
             "params": {
                 "MaxCellAngle": 0.005, 
                 "MaxCellAngleRZ": 0.005,
                 "Chi2Cut": 100,
-                "MinClustersOnTrack": 4,
+                "MinClustersOnTrack": 3,
                 "MaxDistance": CT_MAX_DIST,
                 "SlopeZRange": 1.0,  
                 "HighPTCut": 10.0,
@@ -105,6 +110,21 @@ parameters = {
             "flags": ["HighPTFit"],
             "functions": ["BuildNewTracks", "SortTracks"],
         },
+        "Tracker": {
+            "collections": ["VTXDigiHits", "OTBarDigiHits"],
+            "params": {
+                "MaxCellAngle": 0.1,
+                "MaxCellAngleRZ": 0.1,
+                "Chi2Cut": 2000,
+                "MinClustersOnTrack": 4,
+                "MaxDistance": CT_MAX_DIST,
+                "SlopeZRange": 10.0,
+                # "HighPTCut": 1.0,
+                "HighPTCut": 100.0,
+                },
+            "flags": ["HighPTFit", "VertexToTracker", "RadialSearch"],
+            "functions": ["CombineCollections", "ExtendTracks"],
+            },
     }
 
 configure_conformal_tracking_steps(tracking, parameters)
@@ -116,8 +136,7 @@ root_hist_svc.FileName = "conformal_tracking_hist.root"
 ApplicationMgr(
     TopAlg=[tracking],
     EvtSel="NONE",
-    # EvtMax=-1,
-    EvtMax=100,
+    EvtMax=-1,
     ExtSvc=[eds, geoservice, root_hist_svc],
     OutputLevel=INFO,
 )
