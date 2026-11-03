@@ -24,8 +24,8 @@ import os
 id_service = UniqueIDGenSvc("UniqueIDGenSvc")
 
 geoservice = GeoSvc("GeoSvc")
-# geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
-geoservice.detectors = ["/home/edi/Software/ALFA-config/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
+# geoservice.detectors = ["/home/edi/Software/ALFA-config/FCCee/ALFA/compact/ALFA_o1_v00/ALFA_o1_v00.xml"]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
@@ -63,7 +63,8 @@ root_hist_svc = RootHistoSink("RootHistoSink") #writes histos diretcly to a root
 root_hist_svc.FileName = "ddplanardigi_hist.root"
 
 #TopAlg : algo executed once per event
-ApplicationMgr(TopAlg=[otbar_digi, vtx_digi],
+# ApplicationMgr(TopAlg=[otbar_digi, vtx_digi],
+ApplicationMgr(TopAlg=[otbar_digi],
                EvtSel="NONE",
                EvtMax=-1,
                ExtSvc=[EventDataSvc("EventDataSvc"), root_hist_svc],
