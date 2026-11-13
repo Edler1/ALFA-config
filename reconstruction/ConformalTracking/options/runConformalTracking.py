@@ -45,20 +45,23 @@ geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
 iosvc = IOSvc()
-iosvc.Input = "alfaTrackerDigitization.root"
-iosvc.Output = "alfaTrackerConformalTracking.root"
+iosvc.Input = "ALFA_o1_v00_digi.root"
+iosvc.Output = "ALFA_o1_v00_conformaltracking.root"
 
 
 tracking = ConformalTracking()
 tracking.TrackerHitCollectionNames = ["VTXDigiHits", "OTBarDigiHits"]
 # tracking.TrackerHitCollectionNames = ["VTXDigiHits"]
+# tracking.TrackerHitCollectionNames = ["OTBarDigiHits"]
 tracking.RelationsNames = ["VTXHitRelations", "OTBarHitRelations"]
 # tracking.RelationsNames = ["VTXHitRelations"]
+# tracking.RelationsNames = ["OTBarHitRelations"]
 tracking.MCParticleCollectionName = ["MCParticles"]
 tracking.SiTrackCollectionName = "Tracks"
 
 tracking.MainTrackerHitCollectionNames = ["OTBarDigiHits"]
 tracking.VertexBarrelHitCollectionNames = ["VTXDigiHits"]
+tracking.VertexBarrelHitCollectionNames = []
 tracking.VertexEndcapHitCollectionNames = []
 
 # tracking.DebugHits = "DebugHits"
@@ -74,15 +77,17 @@ tracking.ThetaRange = 0.05
 tracking.TooManyTracks = 100000
 tracking.trackPurity = 0.7
 
+# tracking.OutputLevel=DEBUG
+
 
 CT_MAX_DIST = 0.05
 
 # The keys (VXDBarrel, VXDEndcap...) are simply names and are not passed to ConformalTracking
 parameters = {
-        #tightest cuts, builds fresh tracks from just the vertex barrel
-        "Barrel": {
-            # "collections": ["VTXDigiHits", "OTBarDigiHits"],
+        #tightest cuts, builds fresh tracks from just the vertex 
+        "Vertex": {
             "collections": ["VTXDigiHits"],
+            # "collections": ["OTBarDigiHits"],
             "params": {
                 "MaxCellAngle": 0.005, 
                 "MaxCellAngleRZ": 0.005,
@@ -92,7 +97,7 @@ parameters = {
                 "SlopeZRange": 1.0,  
                 "HighPTCut": 10.0,
             },
-            "flags": ["HighPTFit"],
+            "flags": ["HighPTFit", "VertexToTracker"],
             "functions": ["CombineCollections", "BuildNewTracks"],
         },
         #more looser cuts, no collections; doesnt read any new hit collection, rebuilds and sorts using whatver's found; final cleaup pass over the barrel det only tracks
@@ -119,8 +124,7 @@ parameters = {
                 "MinClustersOnTrack": 4,
                 "MaxDistance": CT_MAX_DIST,
                 "SlopeZRange": 10.0,
-                # "HighPTCut": 1.0,
-                "HighPTCut": 100.0,
+                "HighPTCut": 1.0,
                 },
             "flags": ["HighPTFit", "VertexToTracker", "RadialSearch"],
             "functions": ["CombineCollections", "ExtendTracks"],
