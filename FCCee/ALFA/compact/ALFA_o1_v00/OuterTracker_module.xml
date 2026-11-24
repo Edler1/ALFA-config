@@ -2,8 +2,8 @@
 
     <comment> Sensor components of the silicon outer tracker barrel and disk </comment>
 
-    <component name="Left_Sensor_Column" sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="-OTBar_mod_rphi / 2." xmax="-OTBar_mod_rphi_periphery / 2." vis="OTBarSensitiveVis"/>
-    <component name="Right_Sensor_Column" sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="+OTBar_mod_rphi_periphery / 2." xmax="OTBar_mod_rphi / 2." vis="OTBarSensitiveVis"/>
+    <component name="Left_Sensor_Column" sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="-OTBar_mod_rphi / 2." xmax="-OTBar_mod_rphi_periphery / 2." vis="OTBarSensitiveVis" other_insensitive_thickness_below="OTBar_Flex_thickness + OTBar_HDI_thickness + OTBar_sens_Copper_thickness" other_insensitive_thickness_above="OTBar_Flex_thickness + OTBar_HDI_thickness + OTBar_sens_Copper_thickness" />
+    <component name="Right_Sensor_Column" sensitive="True" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="+OTBar_mod_rphi_periphery / 2." xmax="OTBar_mod_rphi / 2." vis="OTBarSensitiveVis" other_insensitive_thickness_below="OTBar_Flex_thickness + OTBar_HDI_thickness + OTBar_sens_Copper_thickness" other_insensitive_thickness_above="OTBar_Flex_thickness + OTBar_HDI_thickness + OTBar_sens_Copper_thickness"/>
     <component name="Sensor_Periphery" sensitive="False" ymin="-OTBar_mod_z / 2." ymax="OTBar_mod_z / 2." xmin="-OTBar_mod_rphi_periphery / 2." xmax="OTBar_mod_rphi_periphery / 2." vis="OTBarPeripheryVis"/>
 
 
